@@ -7,7 +7,7 @@
  * Major Changes In:	
  * Builtin:				true
  * Free:				true
- * Module Version:		1.0.2
+ * Module Version:		1.0.3
  * License:				GPLv2 or later
 */
 
@@ -674,7 +674,7 @@ class category_page {
 class Walker_pageNavi extends Walker_Page {
 	var $displayed = array();
 	
-	function walk( $elements, $max_depth) {
+	function walk( $elements, $max_depth, ...$args ) {
 
 		$args = array_slice(func_get_args(), 2);
 		$output = '';
@@ -776,9 +776,10 @@ class Walker_pageNavi extends Walker_Page {
 			$indent = '';
 
 		extract($args, EXTR_SKIP);
+
+		$level = $depth + 1;
+		$css_class = array( 'sitenavi-pages', 'level-' . $level, );
 		
-		$css_class = array( 'sitenavi-pages', 'level-' . $depth + 1,
-		);
 		if ( !empty( $current_page ) ) {
 			$_current_page = get_post( $current_page );
 			if ( in_array( $page->ID, $_current_page->ancestors ) )
