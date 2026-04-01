@@ -12,12 +12,12 @@
 */
 
 class site_structure {
-	var $parent;
-	var $settings;
-	var $styles_dir;
-	var $styles_dir_url;
+	public $parent;
+	public $settings;
+	public $styles_dir;
+	public $styles_dir_url;
 
-	function __construct( $parent ) {
+	public function __construct( $parent ) {
 		// infinity cmsのオブジェクトをプロパティにセット
 		$this->parent = $parent;
 		$this->styles_dir['base'] = plugin_dir_path( dirname( __FILE__ ) ) . 'sitemap-styles/';
@@ -61,7 +61,7 @@ class site_structure {
 	 * @since 0.0.1
 	 */
 	public function add_sitemap_page() {
-		add_submenu_page( $this->parent->root, 'サイト構造', 'サイト構造', 'administrator', basename( $this->parent->root ) . '-structure', array( $this, 'setting_page' ) );
+		add_submenu_page( $this->parent->root, 'サイト構造', 'サイト構造', 'manage_options', basename( $this->parent->root ) . '-structure', array( $this, 'setting_page' ) );
 	}
 	
 	/*
@@ -73,7 +73,7 @@ class site_structure {
 		$sitemap_styles = $this->get_sitemap_styles();
 ?>
 <div class="wrap">
-	<h2>サイトマップ設定</h2>
+	<h1>サイトマップ設定</h1>
 	<p>サイトマップの設定を行うことにより、サイトマップ、パンくずナビ、サブナビゲーションの表示を統合的に管理できます。</p>
 
 	<form action="" method="post">
@@ -219,7 +219,7 @@ endfor;
 	/*
 	 * サイトマップ設定のデータ更新処理
 	 */
-	function update_sitemap_settings() {
+	public function update_sitemap_settings() {
 		if ( isset( $_POST['wp-sitemanager-sitemap'] ) ) {
 			check_admin_referer( 'wp-sitemanager-sitemap' );
 			$post_data = stripslashes_deep( $_POST );
@@ -255,7 +255,7 @@ endfor;
 		$walker = new Walker_pageNavi;
 		$sitemap = '<ul class="sitemap">' . "\n";
 		$sitemap .= apply_filters( 'infinity-sitemap-before', '' );
-		$sitemap .= call_user_func_array( array( &$walker, 'walk' ), $args );
+		$sitemap .= call_user_func_array( array( $walker, 'walk' ), $args );
 		$sitemap .= apply_filters( 'infinity-sitemap-after', '' );
 		$sitemap .= '</ul>' . "\n";
 		return apply_filters( 'infinity-sitemap', $sitemap, $atts );
@@ -478,7 +478,7 @@ $this->instance->$slug = new site_structure( $this );
 
 
 class category_page {
-	function __construct() {
+	public function __construct() {
 		if ( is_admin() ) {
 			// 固定ページなどの投稿画面にカテゴリーページのチェックボックスを追加表示
 			add_action( 'post_submitbox_misc_actions'	, array( $this, 'add_category_page_checkbox' ) );
@@ -672,11 +672,10 @@ class category_page {
  * display_element内で、子の項目があれば、再帰的にdisplay_elementを呼んで再帰動作を実現しています。
  */
 class Walker_pageNavi extends Walker_Page {
-	var $displayed = array();
+	public $displayed = array();
 	
-	function walk( $elements, $max_depth, ...$args ) {
+	public function walk( $elements, $max_depth, ...$args ) {
 
-		$args = array_slice(func_get_args(), 2);
 		$output = '';
 
 		if ($max_depth < -1) //invalid parameter
@@ -763,13 +762,13 @@ class Walker_pageNavi extends Walker_Page {
 	}
 
 
-		function start_lvl( &$output, $depth = 0, $args = array() ) {
+	public function start_lvl( &$output, $depth = 0, $args = array() ) {
 		$indent = str_repeat( "\t", $depth );
 		$output .= "\n$indent<ul class=\"children\">\n";
 	}
 
 
-	function start_el( &$output, $page, $depth = 0, $args = array(), $current_page = 0 ) {
+	public function start_el( &$output, $page, $depth = 0, $args = array(), $current_page = 0 ) {
 		if ( $depth )
 			$indent = str_repeat("\t", $depth);
 		else
@@ -796,7 +795,7 @@ class Walker_pageNavi extends Walker_Page {
 	}
 
 
-	function display_element( $element, &$children_elements, $max_depth, $depth = 0, $args, &$output ) {
+	public function display_element( $element, &$children_elements, $max_depth, $depth = 0, $args, &$output ) {
 
 		if ( ! $element )
 			return;
@@ -876,7 +875,7 @@ class Walker_pageNavi extends Walker_Page {
 	/*
 	 * サイトマップで固定ページにぶら下がるカスタム投稿タイプ、カスタム分類（カテゴリー、タグ含）のツリーを表示
 	 */
-	function display_post_type_tree( $post_type, $output, $depth, $args ) {
+	public function display_post_type_tree( $post_type, $output, $depth, $args ) {
 		if ( $args[0]['depth'] == 0 ) {
 			$child_depth = 0;
 		} elseif ( $args[0]['depth'] == -1 ) {
@@ -909,7 +908,7 @@ class Walker_pageNavi extends Walker_Page {
 					);
 					$args = array( $pages, $child_depth, $args, '' );
 					$walker = new Walker_pageNavi;
-					$output .= call_user_func_array( array( &$walker, 'walk' ), $args );
+					$output .= call_user_func_array( array( $walker, 'walk' ), $args );
 				}
 				break;
 			default :
@@ -931,7 +930,7 @@ class Walker_pageNavi extends Walker_Page {
 					$terms = get_categories( $args );
 					$args = array( $terms, $child_depth, $args  );
 					$walker = new Walk_categoryNavi( $depth );
-					$output .= call_user_func_array( array( &$walker, 'walk' ), $args );
+					$output .= call_user_func_array( array( $walker, 'walk' ), $args );
 				}
 		}
 		return $output;
@@ -941,13 +940,13 @@ class Walker_pageNavi extends Walker_Page {
 
 
 class Walk_categoryNavi extends Walker_Category {
-	var $root_depth;
-	function __construct( $depth ) {
+	public $root_depth;
+	public function __construct( $depth ) {
 		$this->root_depth = $depth;
 	}
 
 
-	function start_el( &$output, $category, $depth = 0, $args = array(), $id = 0 ) {
+	public function start_el( &$output, $category, $depth = 0, $args = array(), $id = 0 ) {
 		$current_depth = $depth;
 		extract($args);
 
@@ -972,7 +971,9 @@ class Walk_categoryNavi extends Walker_Category {
 
 
 class infinity_sub_navi_widget extends WP_Widget {
-	
+
+	public $defaults = array();
+
 	public function __construct() {
 		$widget_ops = array(
 			'classname' => 'sub_navi-widget',
@@ -1263,7 +1264,7 @@ class infinity_sub_navi_widget extends WP_Widget {
 		return $new_instance;
 	}
  
-	function form( $instance ) {
+	public function form( $instance ) {
 //		var_dump( $instance );
 		$custom_post_types = get_post_types( array( 'public' => true, '_builtin' => false, 'publicly_queryable' => true ), false );
 		$instance = wp_parse_args( (array)$instance, $this->defaults );

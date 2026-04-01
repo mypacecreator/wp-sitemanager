@@ -10,14 +10,14 @@
  * License:				GPLv2 or later
 */
 class WP_SiteManager_bread_crumb{
-	var $site_structure;
+	public $site_structure;
 	
-function __construct() {
+public function __construct() {
 	$this->site_structure = get_option( 'wp-sitemanager-site-structure' );
 }
 
 
-static function bread_crumb( $args = '' ) {
+public static function bread_crumb( $args = '' ) {
 	global $WP_SiteManager;
 	$default = array(
 		'type'				=> 'list',

@@ -15,8 +15,9 @@ class WP_SiteManager_cache{
 	private $advance_cache_tpl;
 	private $regex_include_tpl;
 	private $headers = array();
+	private $parent;
 
-function __construct( $parent ) {
+public function __construct( $parent ) {
 	global $cache_db, $wpdb, $table_prefix;
 	$this->advance_cache_tpl = plugin_dir_path( dirname( __FILE__ ) ) . 'advanced_cache_tpl/advanced-cache.tpl';
 	$this->regex_include_tpl = plugin_dir_path( dirname( __FILE__ ) ) . 'advanced_cache_tpl/regex_include.tpl';
@@ -137,7 +138,7 @@ MODIFY		`type` VARCHAR( 20 )";
 
 
 public function add_setting_menu() {
-	add_submenu_page( $this->parent->root, 'キャッシュ', 'キャッシュ', 'administrator', basename( $this->parent->root ) . '-cache', array( $this, 'cache_setting_page' ) );
+	add_submenu_page( $this->parent->root, 'キャッシュ', 'キャッシュ', 'manage_options', basename( $this->parent->root ) . '-cache', array( $this, 'cache_setting_page' ) );
 }
 
 public function cache_setting_page() {
@@ -147,7 +148,7 @@ public function cache_setting_page() {
 	$advanced_check = $this->check_advanced_cache_file();
 ?>
 <div class="wrap">
-<h2>キャッシュ設定</h2>
+<h1>キャッシュ設定</h1>
 <h3>キャッシュの有効期限</h3>
 <?php if ( ! ( defined( 'WP_CACHE' ) && WP_CACHE ) ) : ?>
 <div class="updated"> 
