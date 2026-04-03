@@ -30,7 +30,7 @@ class meta_manager {
 	public $ogp_description_chars = 120;
 	public $ogp_image;
 
-	public function __construct( $parent ) {
+	function __construct( $parent ) {
 		$this->parent = $parent;
 
 		if ( is_admin() ) {
@@ -58,7 +58,7 @@ class meta_manager {
 		}
 	}
 	
-	public function taxonomy_update_hooks() {
+	function taxonomy_update_hooks() {
 		$taxonomies = get_taxonomies( array( 'public' => true, 'show_ui' => true ) );
 		if ( ! empty( $taxonomies ) ) {
 			foreach ( $taxonomies as $taxonomy ) {
@@ -71,7 +71,7 @@ class meta_manager {
 		}
 	}
 
-	public function add_keywords_form() {
+	function add_keywords_form() {
 	?>
 	<div class="form-field">
 		<label for="meta_keywords">メタキーワード</label>
@@ -85,7 +85,7 @@ class meta_manager {
 	}
 	
 	
-	public function edit_keywords_form( $tag ) {
+	function edit_keywords_form( $tag ) {
 	?>
 		<tr class="form-field">
 			<th scope="row" valign="top"><label for="meta_keywords">メタキーワード</label></th>
@@ -99,7 +99,7 @@ class meta_manager {
 	}
 
 
-	public function update_term_meta( $term_id ) {
+function update_term_meta( $term_id ) {
 	if ( ! isset( $_POST['meta_keywords'] ) ) { return; }
 	$post_keywords = stripslashes_deep( $_POST['meta_keywords'] );
 	$post_keywords = $this->get_unique_keywords( $post_keywords );
@@ -116,14 +116,14 @@ class meta_manager {
 }
 
 
-	public function add_post_meta_box( $post_type, $post ) {
+function add_post_meta_box( $post_type, $post ) {
 	if ( isset( $post->post_type ) && in_array( $post_type, get_post_types( array( 'public' => true ) ) ) && $post_type != 'attachment' ) {
 		add_meta_box( 'postmeta_meta_box', 'メタ情報', array( $this, 'post_meta_box' ), $post_type, 'normal', 'high');
 	}
 }
 
 
-	public function post_meta_box() {
+function post_meta_box() {
 	global $post;
 	$post_keywords = get_post_meta( $post->ID, '_keywords', true ) ? get_post_meta( $post->ID, '_keywords', true ) : '';
 	$post_description = get_post_meta( $post->ID, '_description', true ) ? get_post_meta( $post->ID, '_description', true ) : '';
@@ -138,7 +138,7 @@ class meta_manager {
 }
 
 
-	public function print_metabox_styles() {
+function print_metabox_styles() {
 ?>
 <style type="text/css" charset="utf-8">
 #post_keywords,
@@ -150,7 +150,7 @@ class meta_manager {
 }
 
 
-	public function update_post_meta( $post_ID ) {
+function update_post_meta( $post_ID ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
 	if ( isset( $_POST['_keywords'] ) ) {
 		$post_keywords = stripslashes_deep( $_POST['_keywords'] );
@@ -164,7 +164,7 @@ class meta_manager {
 }
 
 
-	public function output_meta() {
+function output_meta() {
 	$meta = $this->get_meta();
 	$output = '';
 
@@ -281,10 +281,7 @@ private function get_post_meta() {
 		if ( trim( $post->post_excerpt ) ) {
 			$post_meta['description'] = $post->post_excerpt;
 		} else {
-			$excerpt = apply_filters( 'the_content', strip_shortcodes( $post->post_content ) );
-			$excerpt = strip_shortcodes( $excerpt );
-			$excerpt = str_replace( ']]>', ']]&gt;', $excerpt );
-			$excerpt = strip_tags( $excerpt );
+			$excerpt = wp_strip_all_tags( preg_replace( '/<!--.*?-->/s', '', strip_shortcodes( $post->post_content ) ) );
 			$post_meta['description'] = trim( preg_replace( '/[\n\r\t ]+/', ' ', $excerpt), ' ' );
 		}
 	}
@@ -455,25 +452,25 @@ private function get_sns_meta( $meta ) {
 
 		$tags['title'] = ! empty( $data->post_title ) ? wp_kses( $data->post_title, array() ) : '';
 		$tags['type']  = 'article';
-		$tags['url']   = $this->get_pagenum_link( get_permalink( $data->ID ), get_query_var( 'paged' ) );
+		$tags['url']   = $this->get_pagenum_link( get_query_var( 'paged' ), get_permalink( $data->ID ) );
 		$tags['description'] = $meta['description'];
 	} elseif ( is_tax() || is_category() || is_tag() ) {
 		$term_obj = get_queried_object();
 		$tags['title'] = $term_obj->name ;
 		$tags['type']  = 'article';
-		$tags['url']   = $this->get_pagenum_link( get_term_link( $term_obj, $term_obj->taxonomy ), get_query_var( 'paged' ) );
+		$tags['url']   = $this->get_pagenum_link( get_query_var( 'paged' ), get_term_link( $term_obj, $term_obj->taxonomy ) );
 		$tags['description'] = ! empty( $meta['description'] ) ? $meta['description'] : ' ';
 	} elseif ( is_author() ) {
 		$author_obj = get_queried_object();
 		$tags['title'] = $author_obj->display_name;
 		$tags['type'] = 'author';
-		$tags['url']   = $this->get_pagenum_link( get_author_posts_url( $author_obj->ID ), get_query_var( 'paged' ) );
+		$tags['url']   = $this->get_pagenum_link( get_query_var( 'paged' ), get_author_posts_url( $author_obj->ID ) );
 		$tags['description'] = ! empty( $author_obj->description ) ? $author_obj->description : ' ';
 	} elseif ( is_post_type_archive() ) { //カスタム投稿タイプのアーカイブ 'has_archive' => true
 		$posttype_obj = get_queried_object();
 		$tags['title'] = $posttype_obj->labels->name;
 		$tags['type'] = 'article';
-		$tags['url']   = $this->get_pagenum_link( get_post_type_archive_link( $posttype_obj->name ), get_query_var( 'paged' ) );
+		$tags['url']   = $this->get_pagenum_link( get_query_var( 'paged' ), get_post_type_archive_link( $posttype_obj->name ) );
 		$tags['description'] = ! empty( $posttype_obj->description ) ? $posttype_obj->description : ' ';
 	}
 	return $tags;
@@ -495,7 +492,7 @@ private function og_get_image( $width = 1200, $height = 630 ) { // Facebook requ
 		$args = array(
 			'post_type'   => 'attachment',
 			'posts_per_page' => 1,
-			'post_status' => 'inherit',
+			'post_status' => null,
 			'post_parent' => $post->ID,
 			'exclude'     => get_post_thumbnail_id(),
 			'orderby'     => 'menu_order',
@@ -578,7 +575,7 @@ private function get_avatar_url( $email, $width ) {
 	return $return;
 }
 
-	public function setting_page() {
+function setting_page() {
 	$meta_keywords = get_option( 'meta_keywords' ) ? get_option( 'meta_keywords' ) : '';
 	$meta_description = get_option( 'meta_description' ) ? get_option( 'meta_description' ) : '';
 	$ogp_image = get_option( 'ogp_image' ) ? get_option( 'ogp_image' ) : '';
@@ -687,7 +684,7 @@ private function get_avatar_url( $email, $width ) {
 <?php
 }
 
-	public function setting_page_scripts() {
+function setting_page_scripts() {
 	// http://firegoby.jp/archives/4031
 
 	wp_enqueue_media(); // メディアアップローダー用のスクリプトをロードする
@@ -704,7 +701,7 @@ private function get_avatar_url( $email, $width ) {
 }
 
 
-	public function update_settings() {
+function update_settings() {
 	if ( isset( $_POST['wp-sitemanager-access'] ) ) {
 		$post_data = stripslashes_deep( $_POST );
 		check_admin_referer( 'wp-sitemanager-access' );
@@ -738,7 +735,7 @@ private function get_avatar_url( $email, $width ) {
 }
 
 
-private function get_pagenum_link( $request, $pagenum = 1, $escape = true ) {
+private function get_pagenum_link($pagenum, $request, $escape = true ) {
 	global $wp_rewrite;
 
 	$pagenum = (int) $pagenum;
@@ -806,7 +803,7 @@ public function rel_canonical() {
 	if ( !$id = $wp_the_query->get_queried_object_id() )
 		return;
 
-	$link = $this->get_pagenum_link( get_permalink( $id ), get_query_var( 'paged' ) );
+	$link = $this->get_pagenum_link( get_query_var( 'paged' ), get_permalink( $id ) );
 
 	if ( $page = get_query_var('cpage') )
 		$link = get_comments_pagenum_link( $page );

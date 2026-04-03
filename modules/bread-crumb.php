@@ -12,12 +12,12 @@
 class WP_SiteManager_bread_crumb{
 	public $site_structure;
 	
-public function __construct() {
+function __construct() {
 	$this->site_structure = get_option( 'wp-sitemanager-site-structure' );
 }
 
 
-public static function bread_crumb( $args = '' ) {
+static function bread_crumb( $args = '' ) {
 	global $WP_SiteManager;
 	$default = array(
 		'type'				=> 'list',
@@ -130,7 +130,9 @@ public static function bread_crumb( $args = '' ) {
 				if ( $args['li_class'] ) {
 					$output .= ' ' . $args['li_class'];
 				}
-				$output .= '"><a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a></li>' . "\n";
+				$output .= '"><a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a>' . "\n";
+				$output .= '<meta itemprop="position" content="'. $cnt . '">' . "\n";
+				$output .= '</li>' . "\n";
 			}
 			$cnt++;
 		}

@@ -18,12 +18,12 @@ class theme_switcher {
 	public $device_theme = false;
 	public $current_group = false;
 	public $available_themes;
-	public $parent;
-	public $device_table;
-	public $group_table;
-	public $relation_table;
+	public $parent = null;
+	public $device_table = null;
+	public $group_table = null;
+	public $relation_table = null;
 
-	public function __construct( $parent ) {
+	function __construct( $parent ) {
 		global $wpdb;
 		$this->parent = $parent;
 		$this->device_table = $wpdb->prefix . 'sitemanager_device';
@@ -31,7 +31,7 @@ class theme_switcher {
 		$this->relation_table = $wpdb->prefix . 'sitemanager_device_relation';
 
 		add_action( 'plugins_loaded'                                                    , array( $this, 'get_available_themes' ), 9 );
-		add_action( 'wp_initialize_site'                                                , array( $this, 'do_ms_activation_module_hook' ) );
+		add_action( 'wpmu_new_blog'                                                     , array( $this, 'do_ms_activation_module_hook' ) );
 		if ( ! is_admin() ) {
 			add_action( 'plugins_loaded'                                                , array( $this, 'switch_theme' ) );
 			add_filter( 'wp_headers'                                                    , array( $this, 'add_vary_header' ) );
@@ -45,12 +45,16 @@ class theme_switcher {
 	
 	
 	public function get_available_themes() {
-		$this->available_themes = wp_get_themes();
+		if ( function_exists( 'wp_get_themes' ) ) {
+			$this->available_themes =  wp_get_themes();
+		} else {
+			$this->available_themes =  get_themes();
+		}
 	}
 
 
 	public function add_setting_menu() {
-		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'manage_options', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
+		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'administrator', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
 	}
 
 
@@ -214,9 +218,8 @@ class theme_switcher {
 	}
 	
 	
-	public function do_ms_activation_module_hook( $new_site ) {
+	public function do_ms_activation_module_hook( $blog_id ) {
 		global $wpdb;
-		$blog_id = $new_site->blog_id;
 		switch_to_blog( $blog_id );
 		$this->device_table = $wpdb->prefix . 'sitemanager_device';
 		$this->group_table = $wpdb->prefix . 'sitemanager_device_group';
@@ -312,7 +315,7 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 	}
 
 
-	public function setting_page_controller() {
+	function setting_page_controller() {
 		$action = isset( $_GET['action'] ) ? $_GET['action'] : 'list';
 
 		switch ( $action ) {
@@ -347,7 +350,7 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 		$add_device_url = add_query_arg( array( 'action' => 'add_device' ) );
 ?>
 <div class="wrap">
-	<h1>デバイス判定</h1>
+	<h2>デバイス判定</h2>
 	<h3>デバイスグループ <a href="<?php echo esc_url( $add_group_url ); ?>" class="button">追加</a></h3>
 	<?php $groups->display(); ?>
 	<h3>デバイス <a href="<?php echo esc_url( $add_device_url ); ?>" class="button">追加</a></h3>
@@ -358,7 +361,7 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 	}
 
 
-	public function edit_group_page( $id = false ) {
+	function edit_group_page( $id = false ) {
 		if ( $id ) {
 			$update = true;
 			$group = $this->get_group( $id );
@@ -370,9 +373,10 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 
 ?>
 <div class="wrap">
-	<h1>デバイスグループ
+	<?php screen_icon( 'prime-icon32' ); ?>
+	<h2>デバイスグループ
 		<a href="<?php echo esc_url( $list_page_url ); ?>" class="button">一覧ページへ</a>
-	</h1>
+	</h2>
 	<form action="" method="post">
 		<table class="form-table">
 			<tr>
@@ -388,7 +392,11 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 foreach ( $this->available_themes as $key => $theme_object ) :
 	if ( $key != get_option( 'stylesheet' ) ) :
 		$checked = $group->theme == $key ? ' selected="selected"' : '';
-		$name = $theme_object->__get( 'name' );
+		if ( is_object( $theme_object ) ) {
+			$name = $theme_object->__get( 'name' );
+		} else {
+			$name = $theme_object['Name'];
+		}
 ?>
 						<option value="<?php echo esc_attr( $key ); ?>"<?php echo $checked; ?>><?php echo esc_html( $name ); ?></option>
 <?php
@@ -414,7 +422,7 @@ endforeach;
 	}
 
 
-	public function edit_device_page( $id = false ) {
+	function edit_device_page( $id = false ) {
 		if ( $id ) {
 			$update = true;
 			$device = $this->get_device( $id );
@@ -429,9 +437,10 @@ endforeach;
 		$groups = $this->get_groups();
 ?>
 <div class="wrap">
-	<h1>デバイス
+	<?php screen_icon( 'prime-icon32' ); ?>
+	<h2>デバイス
 		<a href="<?php echo esc_url( $list_page_url ); ?>" class="button">一覧ページへ</a>
-	</h1>
+	</h2>
 	<form action="" method="post">
 		<table class="form-table">
 			<tr>
@@ -568,9 +577,17 @@ endif;
 	private function filter_theme( $theme, $template = false ) {
 		if ( $this->device_theme ) {
 			if ( $template ) {
-				$theme_data = wp_get_theme( $this->device_theme );
+				if ( function_exists( 'wp_get_theme' ) ) {
+					$theme_data = wp_get_theme( $this->device_theme );
+				} else {
+					$theme_data = get_theme( $this->device_theme );
+				}
 
-				$parent = $theme_data->__get( 'Template' );
+				if ( is_object( $theme_data ) ) {
+					$parent = $theme_data->__get( 'Template' );
+				} else {
+					$parent = $theme_data['Template'];
+				}
 
 				if ( $parent != $this->device_theme ) {
 					$theme = $parent;
@@ -696,7 +713,7 @@ ORDER BY d.device_id ASC
 	}
 	
 	
-	public static function is_device( $slug ) {
+	static function is_device( $slug ) {
 		global $WP_SiteManager;
 		return in_array( $WP_SiteManager->instance->theme_switcher->current_group, (array)$slug );
 	}
@@ -706,7 +723,7 @@ $this->instance->$instanse = new theme_switcher( $this );
 
 class SiteManager_Device_Group_List_Table extends WP_List_Table {
 	
-	public function __construct( $args = array() ) {
+	function __construct( $args = array() ) {
 		$args = wp_parse_args( $args, array(
 			'plural'   => '',
 			'singular' => '',
@@ -728,12 +745,12 @@ class SiteManager_Device_Group_List_Table extends WP_List_Table {
 		);
 	}
 	
-	public function prepare_items() {
+	function prepare_items() {
 		global $WP_SiteManager;
 		$this->items = $WP_SiteManager->instance->theme_switcher->get_groups();
 	}
 	
-	public function get_columns() {
+	function get_columns() {
 		$columns = array(
 			'group_name' => 'グループ名',
 			'theme'      => 'テーマ',
@@ -744,7 +761,7 @@ class SiteManager_Device_Group_List_Table extends WP_List_Table {
 		return $columns;
 	}
 
-	public function display() {
+	function display() {
 		extract( $this->_args );
 ?>
 <table class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>" cellspacing="0">
@@ -767,32 +784,36 @@ class SiteManager_Device_Group_List_Table extends WP_List_Table {
 <?php
 	}
 	
-	public function column_group_name( $group ) {
+	function column_group_name( $group ) {
 		$url = add_query_arg( array( 'action' => 'edit_group', 'group_id' => $group->group_id ) );
 		echo '<p><a href="' . esc_url( $url ) . '">' . esc_html( $group->group_name ) . '</a><br />' . "\n";
 //		echo '編集 | 削除</p>';
 	}
 	
-	public function column_theme( $group ) {
+	function column_theme( $group ) {
 		global $WP_SiteManager;
 		if ( $group->theme ) {
 			$theme = $WP_SiteManager->instance->theme_switcher->available_themes[$group->theme];
-			$theme = $theme->__get( 'name' );
+			if ( is_object( $theme ) ) {
+				$theme = $theme->__get( 'name' );
+			} else {
+				$theme = $theme['Name'];
+			}
 		} else {
 			$theme = '';
 		}
 		echo esc_html( $theme );
 	}
 	
-	public function column_slug( $group ) {
+	function column_slug( $group ) {
 		echo esc_html( $group->slug );
 	}
 	
-	public function column_priority( $group ) {
+	function column_priority( $group ) {
 		echo esc_html( $group->priority );
 	}
 	
-	public function column_devices( $group ) {
+	function column_devices( $group ) {
 		global $WP_SiteManager;
 		$devices = $WP_SiteManager->instance->theme_switcher->get_group_relation_devices( $group->group_id );
 		if ( $devices ) :
@@ -810,14 +831,14 @@ class SiteManager_Device_Group_List_Table extends WP_List_Table {
 		endif;
 	}
 	
-	public function column_default( $group, $column_name ) {
+	function column_default( $group, $column_name ) {
 		do_action( 'theme_switcher_group_default_column', $column_name, $group );
 	}
 } // SiteManager_Device_Group_List_Table class end
 
 
 class SiteManager_Device_List_Table extends WP_List_Table {
-	public function __construct( $args = array() ) {
+	function __construct( $args = array() ) {
 		$args = wp_parse_args( $args, array(
 			'plural'   => '',
 			'singular' => '',
@@ -839,13 +860,13 @@ class SiteManager_Device_List_Table extends WP_List_Table {
 		);
 	}
 
-	public function prepare_items() {
+	function prepare_items() {
 		global $WP_SiteManager;
 		$this->items = $WP_SiteManager->instance->theme_switcher->get_devices();
 	}
 	
 	
-	public function get_columns() {
+	function get_columns() {
 		$columns = array(
 			'device'  => 'デバイス名',
 			'keyword' => 'キーワード',
@@ -854,7 +875,7 @@ class SiteManager_Device_List_Table extends WP_List_Table {
 		return $columns;
 	}
 
-	public function display() {
+	function display() {
 		extract( $this->_args );
 ?>
 <table class="wp-list-table <?php echo implode( ' ', $this->get_table_classes() ); ?>" cellspacing="0">
@@ -877,16 +898,16 @@ class SiteManager_Device_List_Table extends WP_List_Table {
 <?php
 	}
 
-	public function column_device( $device ) {
+	function column_device( $device ) {
 		$url = add_query_arg( array( 'action' => 'edit_device', 'device_id' => $device->device_id ) );
 		echo '<a href="' . esc_url( $url ) . '">' . esc_html( $device->device_name ) . '</a>';
 	}
 	
-	public function column_keyword( $device ) {
+	function column_keyword( $device ) {
 		echo esc_html( $device->keyword );
 	}
 	
-	public function column_group( $device ) {
+	function column_group( $device ) {
 		global $WP_SiteManager;
 		$groups = $WP_SiteManager->instance->theme_switcher->get_device_relation_groups( $device->device_id );
 		if ( $groups ) :
@@ -904,7 +925,7 @@ class SiteManager_Device_List_Table extends WP_List_Table {
 		endif;
 	}
 	
-	public function column_default( $device, $column_name ) {
+	function column_default( $device, $column_name ) {
 		do_action( 'theme_switcher_device_default_column', $column_name, $device );
 	}
 } // SiteManager_Device_List_Table class end

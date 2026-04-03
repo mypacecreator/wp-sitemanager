@@ -3,8 +3,8 @@
  Plugin Name: WP SiteManager
  Plugin URI: http://www.prime-strategy.co.jp/
  Description: WP SiteManager is an integrated package comprising of necessary functions for using WordPress as a CMS.
- Author: Prime Strategy Co.,LTD.
- Version: 1.2.5
+ Author: Prime Strategy Co.,LTD. / mypacecreator
+ Version: 1.6
  Author URI: http://www.prime-strategy.co.jp/
  License: GPLv2 or later
 */
@@ -16,7 +16,7 @@ class WP_SiteManager {
 	public $root;
 	public $api_server = '';
 
-	public function __construct() {
+	function __construct() {
 		$data = get_file_data( __FILE__, array( 'version' => 'Version' ) );
 		$this->version = $data['version'];
 		$this->instance = new stdClass();
@@ -85,10 +85,10 @@ class WP_SiteManager {
 	 */
 	public function add_cms_menu() {
 		global $_wp_last_object_menu;
-		add_submenu_page( $this->root, 'モジュール', 'モジュール', 'manage_options', __FILE__, array( $this, 'manage_module_page' ) );
-		add_menu_page( 'WP SiteManager', 'WP SiteManager', 'manage_options', __FILE__, array( $this, 'manage_module_page' ), '', 30 );
-//		add_submenu_page( $this->root, '一般設定', '一般設定', 'manage_options', basename( __FILE__ ) . '-general', array( $this, 'general_page' ) );
-		add_submenu_page( $this->root, 'SEO &amp; SMO', 'SEO &amp; SMO', 'manage_options', basename( __FILE__ ) . '-access', array( $this, 'access_page' ) );
+		add_submenu_page( $this->root, 'モジュール', 'モジュール', 'administrator', __FILE__, array( $this, 'manage_module_page' ) );
+		add_menu_page( 'WP SiteManager', 'WP SiteManager', 'administrator', __FILE__, array( $this, 'manage_module_page' ), false, 30 );
+//		add_submenu_page( $this->root, '一般設定', '一般設定', 'administrator', basename( __FILE__ ) . '-general', array( $this, 'general_page' ) );
+		add_submenu_page( $this->root, 'SEO &amp; SMO', 'SEO &amp; SMO', 'administrator', basename( __FILE__ ) . '-access', array( $this, 'access_page' ) );
 	}
 
 	/*
@@ -164,8 +164,8 @@ class WP_SiteManager {
 		$api_link = add_query_arg( array( 'action' => 'register', 'lang' => get_locale() ),$this->api_server . 'wp-login.php' );
 ?>
 <div class="wrap">
-	<h1>WP SiteManager</h1>
-	<h2>モジュール</h2>
+	<h2>WP SiteManager</h2>
+	<h3>モジュール</h3>
 <?php
 if ( $installed_modules ) : 
 	foreach ( $installed_modules as $slug => $module ) : 
@@ -296,8 +296,8 @@ endif;
 			}
 		}
 
-		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
-				if ( ! in_array( 'site-cache', $disabled_modules ) ) {
+		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
+			if ( ! in_array( 'site-cache', $disabled_modules ) ) {
 				$disabled_modules[] = 'site-cache';
 			}
 		}
@@ -337,7 +337,7 @@ endif;
 					}
 				}
 
-				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
+				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
 					if ( 'site-cache.php' == basename( $file ) ) {
 						continue;
 					}
@@ -438,7 +438,7 @@ endif;
 	public function general_page() {
 ?>
 <div class="wrap">
-	<h1>一般設定</h1>
+	<h2>一般設定</h2>
 	<form action="" method="post">
 		<?php wp_nonce_field( 'wp-sitemanager-general' ); ?>
 		<?php do_action( 'wp-sitemanager-general-page' ); ?>
@@ -471,7 +471,7 @@ endif;
 	public function access_page() {
 ?>
 <div class="wrap">
-	<h1>SEO &amp; SMO</h1>
+	<h2>SEO &amp; SMO</h2>
 	<form action="" method="post">
 		<?php wp_nonce_field( 'wp-sitemanager-access' ); ?>
 		<?php do_action( 'wp-sitemanager-access-page' ); ?>
