@@ -34,7 +34,7 @@ static function bread_crumb( $args = '' ) {
 		'month_label'		=> '%s月',
 		'day_label'			=> '%s日',
 		'post_type_label'	=> '%s',
-		'joint_string'		=> ' &gt; ',
+		'joint_string'		=> ' > ',
 		'navi_element'		=> '',
 		'elm_class'			=> 'bread_crumb',
 		'elm_id'			=> '',
@@ -91,9 +91,9 @@ static function bread_crumb( $args = '' ) {
 		$cnt = 1;
 		foreach ( $bread_crumb_arr as $ancestor ) {
 			if ( $cnt == count( $bread_crumb_arr ) ) {
-				$output[] = '<strong class="' . $args['current_class'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</strong>';
+				$output[] = '<strong class="' . esc_attr( $args['current_class'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</strong>';
 			} else {
-				$output[] = '<a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a>';
+				$output[] = '<a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</a>';
 			}
 			$cnt++;
 		}
@@ -125,14 +125,14 @@ static function bread_crumb( $args = '' ) {
 					$output .= ' ' . $args['li_class'];
 				}
 				$output .= ' ' .  $args['current_class'];
-				$output .= '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</li>' . "\n";
+				$output .= '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</li>' . "\n";
 			} else {
 				$output .= $elm_tabs . $tabs . '	<li class="' . implode( ' ', $classes );
 				if ( $args['li_class'] ) {
 					$output .= ' ' . $args['li_class'];
 				}
-				$output .= '"><a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a>' . "\n";
-				$output .= '<meta itemprop="position" content="'. $cnt . '">' . "\n";
+				$output .= '"><a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</a>' . "\n";
+				$output .= '<meta itemprop="position" content="'. esc_attr( (string) $cnt ) . '">' . "\n";
 				$output .= '</li>' . "\n";
 			}
 			$cnt++;
