@@ -563,15 +563,28 @@ class category_page {
 	 * @since 0.0.1
 	 */
 	public function replace_category_page_permalink( $link, $id_or_post ) {
+		static $resolving = array();
+		$post_id = is_int( $id_or_post ) ? $id_or_post : ( is_object( $id_or_post ) ? $id_or_post->ID : 0 );
+		if ( isset( $resolving[ $post_id ] ) ) {
+			return $link;
+		}
+		$resolving[ $post_id ] = true;
+
 		// id（固定ページの場合）かオブジェクトか（カスタム投稿タイプの場合）を判別してパラメーター差違を吸収
 		if ( is_int( $id_or_post ) ) {
 			$post = get_post( $id_or_post );
 		} elseif ( is_object( $id_or_post ) ) {
 			$post = $id_or_post;
 		} else {
+			unset( $resolving[ $post_id ] );
 			return $link;
 		}
-		
+
+		if ( ! $post ) {
+			unset( $resolving[ $post_id ] );
+			return $link;
+		}
+
 		// 階層が有効になっている場合のみリンク書き換えを実行
 		if ( is_post_type_hierarchical( $post->post_type ) ) {
 			if ( $this->is_category_page( $post->ID ) ) {
@@ -582,6 +595,7 @@ class category_page {
 				}
 			}
 		}
+		unset( $resolving[ $post_id ] );
 		return $link;
 	}
 
@@ -941,7 +955,7 @@ class Walker_pageNavi extends Walker_Page {
 
 
 class Walk_categoryNavi extends Walker_Category {
-	var $root_depth;
+	public $root_depth;
 	function __construct( $depth ) {
 		$this->root_depth = $depth;
 	}

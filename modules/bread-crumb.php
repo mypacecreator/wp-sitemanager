@@ -11,7 +11,8 @@
 */
 class WP_SiteManager_bread_crumb{
 	public $site_structure;
-	
+	private $breadcrumb_visited_ids = array();
+
 function __construct() {
 	$this->site_structure = get_option( 'wp-sitemanager-site-structure' );
 }
@@ -157,7 +158,7 @@ static function bread_crumb( $args = '' ) {
 
 private function get_bread_crumb_array( $args ) {
 	global $post;
- 
+	$this->breadcrumb_visited_ids = array();
 	$bread_crumb_arr = array();
 	$bread_crumb_arr[] = array( 'title' => $args['home_label'], 'link' => get_bloginfo( 'url' ) . '/' );
 	$bread_crumb_arr = $this->add_posts_page_array( $bread_crumb_arr );
@@ -282,12 +283,15 @@ private function get_singular_bread_crumb_array( $post, $args ) {
 		$ignore_id = get_option( 'page_on_front' );
 	}
 	$post_type = get_post_type_object( $post->post_type );
-	if ( isset( $this->site_structure[$post->post_type] ) && $this->site_structure[$post->post_type]['page'] != 0 && $ignore_id != $this->site_structure[$post->post_type]['page'] ) {
-		$parent_page = get_post( $this->site_structure[$post->post_type]['page'] );
-		$parent_page->ancestors = get_post_ancestors( $parent_page );
-		$singular_bread_crumb_arr = $this->get_singular_bread_crumb_array( $parent_page, $args );
-		$singular_bread_crumb_arr[] = array( 'title' => $parent_page->post_title, 'link' => get_permalink( $parent_page->ID ) );
-		$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
+	$parent_page_id = isset( $this->site_structure[$post->post_type]['page'] ) ? (int) $this->site_structure[$post->post_type]['page'] : 0;
+	if ( $parent_page_id != 0 && $ignore_id != $parent_page_id && ! in_array( $parent_page_id, $this->breadcrumb_visited_ids, true ) ) {
+		$this->breadcrumb_visited_ids[] = $parent_page_id;
+		$parent_page = get_post( $parent_page_id );
+		if ( $parent_page ) {
+			$singular_bread_crumb_arr = $this->get_singular_bread_crumb_array( $parent_page, $args );
+			$singular_bread_crumb_arr[] = array( 'title' => $parent_page->post_title, 'link' => get_permalink( $parent_page->ID ) );
+			$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
+		}
 	}
 
 	if ( $post_type && $post_type->has_archive ) {
