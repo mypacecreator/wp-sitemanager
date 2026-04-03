@@ -31,7 +31,7 @@ class theme_switcher {
 		$this->relation_table = $wpdb->prefix . 'sitemanager_device_relation';
 
 		add_action( 'plugins_loaded'                                                    , array( $this, 'get_available_themes' ), 9 );
-		add_action( 'wpmu_new_blog'                                                     , array( $this, 'do_ms_activation_module_hook' ) );
+		add_action( 'wp_initialize_site'                                                , array( $this, 'do_ms_activation_module_hook' ) );
 		if ( ! is_admin() ) {
 			add_action( 'plugins_loaded'                                                , array( $this, 'switch_theme' ) );
 			add_filter( 'wp_headers'                                                    , array( $this, 'add_vary_header' ) );
@@ -54,7 +54,7 @@ class theme_switcher {
 
 
 	public function add_setting_menu() {
-		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'administrator', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
+		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'manage_options', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
 	}
 
 
@@ -218,8 +218,9 @@ class theme_switcher {
 	}
 	
 	
-	public function do_ms_activation_module_hook( $blog_id ) {
+	public function do_ms_activation_module_hook( $new_site ) {
 		global $wpdb;
+		$blog_id = $new_site instanceof WP_Site ? $new_site->id : (int) $new_site;
 		switch_to_blog( $blog_id );
 		$this->device_table = $wpdb->prefix . 'sitemanager_device';
 		$this->group_table = $wpdb->prefix . 'sitemanager_device_group';
