@@ -91,9 +91,9 @@ static function bread_crumb( $args = '' ) {
 		$cnt = 1;
 		foreach ( $bread_crumb_arr as $ancestor ) {
 			if ( $cnt == count( $bread_crumb_arr ) ) {
-				$output[] = '<strong class="' . esc_attr( $args['current_class'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</strong>';
+				$output[] = '<strong class="' . esc_attr( $args['current_class'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], 0 ) ) . '</strong>';
 			} else {
-				$output[] = '<a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</a>';
+				$output[] = '<a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], 0 ) ) . '</a>';
 			}
 			$cnt++;
 		}
@@ -125,13 +125,13 @@ static function bread_crumb( $args = '' ) {
 					$output .= ' ' . $args['li_class'];
 				}
 				$output .= ' ' .  $args['current_class'];
-				$output .= '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</li>' . "\n";
+				$output .= '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], 0 ) ) . '</li>' . "\n";
 			} else {
 				$output .= $elm_tabs . $tabs . '	<li class="' . implode( ' ', $classes );
 				if ( $args['li_class'] ) {
 					$output .= ' ' . $args['li_class'];
 				}
-				$output .= '"><a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'] ) ) . '</a>' . "\n";
+				$output .= '"><a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], 0 ) ) . '</a>' . "\n";
 				$output .= '<meta itemprop="position" content="'. esc_attr( (string) $cnt ) . '">' . "\n";
 				$output .= '</li>' . "\n";
 			}
