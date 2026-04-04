@@ -455,4 +455,4 @@ private function get_month_title( $monthnum = 0 ) {
 
 
 } // class end
-$this->instance->$instanse = new WP_SiteManager_bread_crumb( $this );
+$this->instance->$instanse = new WP_SiteManager_bread_crumb();
