@@ -810,7 +810,7 @@ class Walker_pageNavi extends Walker_Page {
 	}
 
 
-	function display_element( $element, &$children_elements, $max_depth, $depth = 0, $args = array(), &$output ) {
+	function display_element( $element, &$children_elements, $max_depth, $depth, $args, &$output ) {
 
 		if ( ! $element )
 			return;
