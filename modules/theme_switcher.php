@@ -216,7 +216,7 @@ class theme_switcher {
 	
 	public function do_ms_activation_module_hook( $new_site ) {
 		global $wpdb;
-		$blog_id = $new_site instanceof WP_Site ? $new_site->id : (int) $new_site;
+		$blog_id = $new_site instanceof WP_Site ? $new_site->blog_id : (int) $new_site;
 		switch_to_blog( $blog_id );
 		$this->device_table = $wpdb->prefix . 'sitemanager_device';
 		$this->group_table = $wpdb->prefix . 'sitemanager_device_group';
