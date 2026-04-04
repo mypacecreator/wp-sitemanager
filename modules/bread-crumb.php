@@ -305,7 +305,7 @@ private function get_singular_bread_crumb_array( $post, $args ) {
 			foreach( $ancestors as $ancestor ) {
 				foreach ( $ancestor_posts as $ancestor_post ) {
 					if ( $ancestor == $ancestor_post->ID && $ancestor != $ignore_id ) {
-						$bread_crumb_arr[] = array( 'title' => apply_filters( 'the_title', $ancestor_post->post_title ), 'link' => get_permalink( $ancestor_post->ID ) );
+						$bread_crumb_arr[] = array( 'title' => apply_filters( 'the_title', $ancestor_post->post_title, $ancestor_post->ID ), 'link' => get_permalink( $ancestor_post->ID ) );
 					}
 				}
 			}
