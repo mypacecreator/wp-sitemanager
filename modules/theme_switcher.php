@@ -45,11 +45,7 @@ class theme_switcher {
 	
 	
 	public function get_available_themes() {
-		if ( function_exists( 'wp_get_themes' ) ) {
-			$this->available_themes =  wp_get_themes();
-		} else {
-			$this->available_themes =  get_themes();
-		}
+		$this->available_themes = wp_get_themes();
 	}
 
 
