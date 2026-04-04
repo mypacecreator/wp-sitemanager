@@ -296,7 +296,7 @@ endif;
 			}
 		}
 
-		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
+		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
 			if ( ! in_array( 'site-cache', $disabled_modules ) ) {
 				$disabled_modules[] = 'site-cache';
 			}
@@ -337,7 +337,7 @@ endif;
 					}
 				}
 
-				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
+				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
 					if ( 'site-cache.php' == basename( $file ) ) {
 						continue;
 					}
