@@ -15,9 +15,13 @@
 require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 class theme_switcher {
 
-	var $device_theme = false;
-	var $current_group = false;
-	var $avaiable_themes;
+	public $device_theme = false;
+	public $current_group = false;
+	public $available_themes;
+	public $parent = null;
+	public $device_table = null;
+	public $group_table = null;
+	public $relation_table = null;
 
 	function __construct( $parent ) {
 		global $wpdb;
@@ -26,8 +30,8 @@ class theme_switcher {
 		$this->group_table = $wpdb->prefix . 'sitemanager_device_group';
 		$this->relation_table = $wpdb->prefix . 'sitemanager_device_relation';
 
-		add_action( 'plugins_loaded'                                                    , array( $this, 'get_avaiable_themes' ), 9 );
-		add_action( 'wpmu_new_blog'                                                     , array( $this, 'do_ms_activation_module_hook' ) );
+		add_action( 'plugins_loaded'                                                    , array( $this, 'get_available_themes' ), 9 );
+		add_action( 'wp_initialize_site'                                                , array( $this, 'do_ms_activation_module_hook' ) );
 		if ( ! is_admin() ) {
 			add_action( 'plugins_loaded'                                                , array( $this, 'switch_theme' ) );
 			add_filter( 'wp_headers'                                                    , array( $this, 'add_vary_header' ) );
@@ -40,17 +44,13 @@ class theme_switcher {
 	}
 	
 	
-	public function get_avaiable_themes() {
-		if ( function_exists( 'wp_get_themes' ) ) {
-			$this->avaiable_themes =  wp_get_themes();
-		} else {
-			$this->avaiable_themes =  get_themes();
-		}
+	public function get_available_themes() {
+		$this->available_themes = wp_get_themes();
 	}
 
 
 	public function add_setting_menu() {
-		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'administrator', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
+		add_submenu_page( $this->parent->root, 'マルチデバイス', 'マルチデバイス', 'manage_options', basename( $this->parent->root ) . '-device', array( $this, 'setting_page_controller' ) );
 	}
 
 
@@ -79,7 +79,7 @@ class theme_switcher {
 		$redirect = '';
 
 		$data['group_name'] = $post_data['group_name'];
-		if ( ! isset( $post_data['theme'] ) || ( $post_data['theme'] && ! in_array( $post_data['theme'], array_keys( $this->avaiable_themes ) ) ) ) {
+		if ( ! isset( $post_data['theme'] ) || ( $post_data['theme'] && ! in_array( $post_data['theme'], array_keys( $this->available_themes ) ) ) ) {
 			$data['theme'] = '';
 		} else {
 			$data['theme'] = $post_data['theme'];
@@ -214,8 +214,9 @@ class theme_switcher {
 	}
 	
 	
-	public function do_ms_activation_module_hook( $blog_id ) {
+	public function do_ms_activation_module_hook( $new_site ) {
 		global $wpdb;
+		$blog_id = $new_site instanceof WP_Site ? $new_site->blog_id : (int) $new_site;
 		switch_to_blog( $blog_id );
 		$this->device_table = $wpdb->prefix . 'sitemanager_device';
 		$this->group_table = $wpdb->prefix . 'sitemanager_device_group';
@@ -385,7 +386,7 @@ INSERT INTO `{$this->relation_table}` (`group_id`, `device_id`) VALUES
 					<select name="theme">
 						<option value="">テーマの切り替えなし</option>
 <?php
-foreach ( $this->avaiable_themes as $key => $theme_object ) :
+foreach ( $this->available_themes as $key => $theme_object ) :
 	if ( $key != get_option( 'stylesheet' ) ) :
 		$checked = $group->theme == $key ? ' selected="selected"' : '';
 		if ( is_object( $theme_object ) ) {
@@ -789,7 +790,7 @@ class SiteManager_Device_Group_List_Table extends WP_List_Table {
 	function column_theme( $group ) {
 		global $WP_SiteManager;
 		if ( $group->theme ) {
-			$theme = $WP_SiteManager->instance->theme_switcher->avaiable_themes[$group->theme];
+			$theme = $WP_SiteManager->instance->theme_switcher->available_themes[$group->theme];
 			if ( is_object( $theme ) ) {
 				$theme = $theme->__get( 'name' );
 			} else {

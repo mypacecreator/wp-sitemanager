@@ -15,6 +15,7 @@ class WP_SiteManager_cache{
 	private $advance_cache_tpl;
 	private $regex_include_tpl;
 	private $headers = array();
+	public $parent;
 
 function __construct( $parent ) {
 	global $cache_db, $wpdb, $table_prefix;

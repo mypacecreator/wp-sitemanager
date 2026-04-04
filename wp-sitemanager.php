@@ -3,18 +3,18 @@
  Plugin Name: WP SiteManager
  Plugin URI: http://www.prime-strategy.co.jp/
  Description: WP SiteManager is an integrated package comprising of necessary functions for using WordPress as a CMS.
- Author: Prime Strategy Co.,LTD.
- Version: 1.2.5
+ Author: Prime Strategy Co.,LTD. / mypacecreator
+ Version: 1.6
  Author URI: http://www.prime-strategy.co.jp/
  License: GPLv2 or later
 */
 
 class WP_SiteManager {
-	var $version;
-	var $enable_modules;
-	var $instance;
-	var $root;
-	var $api_server = '';
+	public $version;
+	public $enable_modules;
+	public $instance;
+	public $root;
+	public $api_server = '';
 
 	function __construct() {
 		$data = get_file_data( __FILE__, array( 'version' => 'Version' ) );
@@ -260,7 +260,7 @@ endif;
 						exit;
 					}
 					break;
-				case 'disable' ;
+				case 'disable' :
 					if ( in_array( $_GET['module'], array_keys( $installed_modules ) ) && ! in_array( $_GET['module'], $disabled_modules ) && ! in_array( strtolower( $installed_modules[$_GET['module']]['builtin'] ), array( '1', 'true' ) ) ) {
 						$disabled_modules[] = $_GET['module'];
 						update_option( 'disabled_modules', $disabled_modules );
@@ -296,7 +296,7 @@ endif;
 			}
 		}
 
-		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
+		if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
 			if ( ! in_array( 'site-cache', $disabled_modules ) ) {
 				$disabled_modules[] = 'site-cache';
 			}
@@ -337,7 +337,7 @@ endif;
 					}
 				}
 
-				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_DEVICE ) {
+				if ( defined( 'WPSM_DISABLE_CACHE' ) && WPSM_DISABLE_CACHE ) {
 					if ( 'site-cache.php' == basename( $file ) ) {
 						continue;
 					}

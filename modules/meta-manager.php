@@ -11,7 +11,7 @@
 */
 
 class meta_manager {
-	var $default = array(
+	public $default = array(
 		'includes_taxonomies'    => array(),
 		'excerpt_as_description' => true,
 		'include_term'           => true,
@@ -21,13 +21,14 @@ class meta_manager {
 		'twitter_site_account'   => ''
 	);
 
-	var $setting;
-	var $term_keywords;
-	var $term_description;
-	var $parent;
-	var $_server_https;
-	var $meta_description_chars = 120;
-	var $ogp_description_chars = 120;
+	public $setting;
+	public $term_keywords;
+	public $term_description;
+	public $parent;
+	public $_server_https;
+	public $meta_description_chars = 120;
+	public $ogp_description_chars = 120;
+	public $ogp_image;
 
 	function __construct( $parent ) {
 		$this->parent = $parent;
@@ -280,10 +281,7 @@ private function get_post_meta() {
 		if ( trim( $post->post_excerpt ) ) {
 			$post_meta['description'] = $post->post_excerpt;
 		} else {
-			$excerpt = apply_filters( 'the_content', strip_shortcodes( $post->post_content ) );
-			$excerpt = strip_shortcodes( $excerpt );
-			$excerpt = str_replace( ']]>', ']]&gt;', $excerpt );
-			$excerpt = strip_tags( $excerpt );
+			$excerpt = wp_strip_all_tags( preg_replace( '/<!--.*?-->/s', '', strip_shortcodes( $post->post_content ) ) );
 			$post_meta['description'] = trim( preg_replace( '/[\n\r\t ]+/', ' ', $excerpt), ' ' );
 		}
 	}
@@ -737,7 +735,7 @@ function update_settings() {
 }
 
 
-private function get_pagenum_link($pagenum = 1, $request, $escape = true ) {
+private function get_pagenum_link($pagenum, $request, $escape = true ) {
 	global $wp_rewrite;
 
 	$pagenum = (int) $pagenum;

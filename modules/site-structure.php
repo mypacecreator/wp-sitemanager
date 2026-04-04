@@ -12,10 +12,10 @@
 */
 
 class site_structure {
-	var $parent;
-	var $settings;
-	var $styles_dir;
-	var $styles_dir_url;
+	public $parent;
+	public $settings;
+	public $styles_dir;
+	public $styles_dir_url;
 
 	function __construct( $parent ) {
 		// infinity cmsのオブジェクトをプロパティにセット
@@ -563,15 +563,28 @@ class category_page {
 	 * @since 0.0.1
 	 */
 	public function replace_category_page_permalink( $link, $id_or_post ) {
+		static $resolving = array();
+		$post_id = is_int( $id_or_post ) ? $id_or_post : ( is_object( $id_or_post ) ? $id_or_post->ID : 0 );
+		if ( isset( $resolving[ $post_id ] ) ) {
+			return $link;
+		}
+		$resolving[ $post_id ] = true;
+
 		// id（固定ページの場合）かオブジェクトか（カスタム投稿タイプの場合）を判別してパラメーター差違を吸収
 		if ( is_int( $id_or_post ) ) {
 			$post = get_post( $id_or_post );
 		} elseif ( is_object( $id_or_post ) ) {
 			$post = $id_or_post;
 		} else {
+			unset( $resolving[ $post_id ] );
 			return $link;
 		}
-		
+
+		if ( ! $post ) {
+			unset( $resolving[ $post_id ] );
+			return $link;
+		}
+
 		// 階層が有効になっている場合のみリンク書き換えを実行
 		if ( is_post_type_hierarchical( $post->post_type ) ) {
 			if ( $this->is_category_page( $post->ID ) ) {
@@ -582,6 +595,7 @@ class category_page {
 				}
 			}
 		}
+		unset( $resolving[ $post_id ] );
 		return $link;
 	}
 
@@ -672,7 +686,7 @@ class category_page {
  * display_element内で、子の項目があれば、再帰的にdisplay_elementを呼んで再帰動作を実現しています。
  */
 class Walker_pageNavi extends Walker_Page {
-	var $displayed = array();
+	public $displayed = array();
 	
 	function walk( $elements, $max_depth, ...$args ) {
 
@@ -796,7 +810,7 @@ class Walker_pageNavi extends Walker_Page {
 	}
 
 
-	function display_element( $element, &$children_elements, $max_depth, $depth = 0, $args, &$output ) {
+	function display_element( $element, &$children_elements, $max_depth, $depth, $args, &$output ) {
 
 		if ( ! $element )
 			return;
@@ -941,7 +955,7 @@ class Walker_pageNavi extends Walker_Page {
 
 
 class Walk_categoryNavi extends Walker_Category {
-	var $root_depth;
+	public $root_depth;
 	function __construct( $depth ) {
 		$this->root_depth = $depth;
 	}
@@ -972,6 +986,7 @@ class Walk_categoryNavi extends Walker_Category {
 
 
 class infinity_sub_navi_widget extends WP_Widget {
+	public $defaults = array();
 	
 	public function __construct() {
 		$widget_ops = array(
@@ -1026,7 +1041,7 @@ class infinity_sub_navi_widget extends WP_Widget {
 			$limit = absint( $instance['home_disp_nums'] ) ? absint( $instance['home_disp_nums'] ) : $this->defaults['home_disp_nums'];
 			$home_posts = get_posts( array( 'orderby' => $orderby, 'post_type' => $instance['home_post_type'], 'showposts' => $limit ) );
 			foreach ( $home_posts as $home_post ) {
-				$output .= '<li><a href="' . get_permalink( $home_post->ID ) . '">' . apply_filters( 'the_title',  $home_post->post_title ) . '</a></li>' . "\n";
+				$output .= '<li><a href="' . get_permalink( $home_post->ID ) . '">' . apply_filters( 'the_title',  $home_post->post_title, $home_post->ID ) . '</a></li>' . "\n";
 			}
 		} elseif ( is_single() || is_category() || is_date() || is_author() ) {
 
@@ -1238,7 +1253,7 @@ class infinity_sub_navi_widget extends WP_Widget {
 		}
 		if ( $output ) {
 			echo $args['before_widget'] . "\n";
-			echo $args['before_title'] . apply_filters( 'the_title', $widget_title ) . $args['after_title'] . "\n";
+			echo $args['before_title'] . apply_filters( 'the_title', $widget_title, 0 ) . $args['after_title'] . "\n";
 			echo '<ul class="sub_navi">' . "\n";
 			echo $output;
 			echo "</ul>\n";

@@ -10,8 +10,9 @@
  * License:				GPLv2 or later
 */
 class WP_SiteManager_bread_crumb{
-	var $site_structure;
-	
+	public $site_structure;
+	private $breadcrumb_visited_ids = array();
+
 function __construct() {
 	$this->site_structure = get_option( 'wp-sitemanager-site-structure' );
 }
@@ -33,7 +34,7 @@ static function bread_crumb( $args = '' ) {
 		'month_label'		=> '%s月',
 		'day_label'			=> '%s日',
 		'post_type_label'	=> '%s',
-		'joint_string'		=> ' &gt; ',
+		'joint_string'		=> ' > ',
 		'navi_element'		=> '',
 		'elm_class'			=> 'bread_crumb',
 		'elm_id'			=> '',
@@ -90,9 +91,9 @@ static function bread_crumb( $args = '' ) {
 		$cnt = 1;
 		foreach ( $bread_crumb_arr as $ancestor ) {
 			if ( $cnt == count( $bread_crumb_arr ) ) {
-				$output[] = '<strong class="' . $args['current_class'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</strong>';
+				$output[] = '<strong class="' . esc_attr( $args['current_class'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], isset( $ancestor['post_id'] ) ? (int) $ancestor['post_id'] : 0 ) ) . '</strong>';
 			} else {
-				$output[] = '<a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a>';
+				$output[] = '<a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], isset( $ancestor['post_id'] ) ? (int) $ancestor['post_id'] : 0 ) ) . '</a>';
 			}
 			$cnt++;
 		}
@@ -124,13 +125,15 @@ static function bread_crumb( $args = '' ) {
 					$output .= ' ' . $args['li_class'];
 				}
 				$output .= ' ' .  $args['current_class'];
-				$output .= '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</li>' . "\n";
+				$output .= '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], isset( $ancestor['post_id'] ) ? (int) $ancestor['post_id'] : 0 ) ) . '</li>' . "\n";
 			} else {
 				$output .= $elm_tabs . $tabs . '	<li class="' . implode( ' ', $classes );
 				if ( $args['li_class'] ) {
 					$output .= ' ' . $args['li_class'];
 				}
-				$output .= '"><a href="' . $ancestor['link'] . '">' . apply_filters( 'the_title', $ancestor['title'] ) . '</a></li>' . "\n";
+				$output .= '"><a href="' . esc_url( $ancestor['link'] ) . '">' . esc_html( apply_filters( 'the_title', $ancestor['title'], isset( $ancestor['post_id'] ) ? (int) $ancestor['post_id'] : 0 ) ) . '</a>' . "\n";
+				$output .= '<meta itemprop="position" content="'. esc_attr( (string) $cnt ) . '">' . "\n";
+				$output .= '</li>' . "\n";
 			}
 			$cnt++;
 		}
@@ -155,7 +158,7 @@ static function bread_crumb( $args = '' ) {
 
 private function get_bread_crumb_array( $args ) {
 	global $post;
- 
+	$this->breadcrumb_visited_ids = array();
 	$bread_crumb_arr = array();
 	$bread_crumb_arr[] = array( 'title' => $args['home_label'], 'link' => get_bloginfo( 'url' ) . '/' );
 	$bread_crumb_arr = $this->add_posts_page_array( $bread_crumb_arr );
@@ -193,8 +196,8 @@ private function get_bread_crumb_array( $args ) {
 		$bread_crumb_arr[] = array( 'title' => $post->post_title, 'link' => get_permalink( $post->ID ) );
 	} elseif ( is_category() ) {
 		global $cat;
-		if ( $this->site_structure['post']['page'] != 0 ) {
-			$singular_bread_crumb_arr = $this->get_parent_page_array( 'post', $args );
+		if ( isset( $this->site_structure['post']['page'] ) && $this->site_structure['post']['page'] != 0 ) {
+				$singular_bread_crumb_arr = $this->get_parent_page_array( 'post', $args );
 			$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
 		}
 		$category = get_category( $cat );
@@ -280,12 +283,15 @@ private function get_singular_bread_crumb_array( $post, $args ) {
 		$ignore_id = get_option( 'page_on_front' );
 	}
 	$post_type = get_post_type_object( $post->post_type );
-	if ( isset( $this->site_structure[$post->post_type] ) && $this->site_structure[$post->post_type]['page'] != 0 && $ignore_id != $this->site_structure[$post->post_type]['page'] ) {
-		$parent_page = get_post( $this->site_structure[$post->post_type]['page'] );
-		$parent_page->ancestors = get_post_ancestors( $parent_page );
-		$singular_bread_crumb_arr = $this->get_singular_bread_crumb_array( $parent_page, $args );
-		$singular_bread_crumb_arr[] = array( 'title' => $parent_page->post_title, 'link' => get_permalink( $parent_page->ID ) );
-		$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
+	$parent_page_id = isset( $this->site_structure[$post->post_type]['page'] ) ? (int) $this->site_structure[$post->post_type]['page'] : 0;
+	if ( $parent_page_id != 0 && $ignore_id != $parent_page_id && ! in_array( $parent_page_id, $this->breadcrumb_visited_ids, true ) ) {
+		$this->breadcrumb_visited_ids[] = $parent_page_id;
+		$parent_page = get_post( $parent_page_id );
+		if ( $parent_page ) {
+			$singular_bread_crumb_arr = $this->get_singular_bread_crumb_array( $parent_page, $args );
+			$singular_bread_crumb_arr[] = array( 'title' => $parent_page->post_title, 'link' => get_permalink( $parent_page->ID ) );
+			$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
+		}
 	}
 
 	if ( $post_type && $post_type->has_archive ) {
@@ -299,7 +305,7 @@ private function get_singular_bread_crumb_array( $post, $args ) {
 			foreach( $ancestors as $ancestor ) {
 				foreach ( $ancestor_posts as $ancestor_post ) {
 					if ( $ancestor == $ancestor_post->ID && $ancestor != $ignore_id ) {
-						$bread_crumb_arr[] = array( 'title' => apply_filters( 'the_title', $ancestor_post->post_title ), 'link' => get_permalink( $ancestor_post->ID ) );
+						$bread_crumb_arr[] = array( 'title' => $ancestor_post->post_title, 'link' => get_permalink( $ancestor_post->ID ), 'post_id' => $ancestor_post->ID );
 					}
 				}
 			}
@@ -449,4 +455,4 @@ private function get_month_title( $monthnum = 0 ) {
 
 
 } // class end
-$this->instance->$instanse = new WP_SiteManager_bread_crumb( $this );
+$this->instance->$instanse = new WP_SiteManager_bread_crumb();
