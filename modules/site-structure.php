@@ -1041,7 +1041,7 @@ class infinity_sub_navi_widget extends WP_Widget {
 			$limit = absint( $instance['home_disp_nums'] ) ? absint( $instance['home_disp_nums'] ) : $this->defaults['home_disp_nums'];
 			$home_posts = get_posts( array( 'orderby' => $orderby, 'post_type' => $instance['home_post_type'], 'showposts' => $limit ) );
 			foreach ( $home_posts as $home_post ) {
-				$output .= '<li><a href="' . get_permalink( $home_post->ID ) . '">' . apply_filters( 'the_title',  $home_post->post_title ) . '</a></li>' . "\n";
+				$output .= '<li><a href="' . get_permalink( $home_post->ID ) . '">' . apply_filters( 'the_title',  $home_post->post_title, $home_post->ID ) . '</a></li>' . "\n";
 			}
 		} elseif ( is_single() || is_category() || is_date() || is_author() ) {
 
@@ -1253,7 +1253,7 @@ class infinity_sub_navi_widget extends WP_Widget {
 		}
 		if ( $output ) {
 			echo $args['before_widget'] . "\n";
-			echo $args['before_title'] . apply_filters( 'the_title', $widget_title ) . $args['after_title'] . "\n";
+			echo $args['before_title'] . apply_filters( 'the_title', $widget_title, 0 ) . $args['after_title'] . "\n";
 			echo '<ul class="sub_navi">' . "\n";
 			echo $output;
 			echo "</ul>\n";
