@@ -196,8 +196,8 @@ private function get_bread_crumb_array( $args ) {
 		$bread_crumb_arr[] = array( 'title' => $post->post_title, 'link' => get_permalink( $post->ID ) );
 	} elseif ( is_category() ) {
 		global $cat;
-		if ( $this->site_structure['post']['page'] != 0 ) {
-			$singular_bread_crumb_arr = $this->get_parent_page_array( 'post', $args );
+		if ( isset( $this->site_structure['post']['page'] ) != 0  ) {
+				$singular_bread_crumb_arr = $this->get_parent_page_array( 'post', $args );
 			$bread_crumb_arr = array_merge( $bread_crumb_arr, $singular_bread_crumb_arr );
 		}
 		$category = get_category( $cat );
